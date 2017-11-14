@@ -2,11 +2,13 @@ import os
 import struct
 from mnist import read, show
 import numpy as np
-import math
+from collections import Counter
+import time
+
+start_time = time.time()
 
 training_data = list(read(dataset = "training", path = "./data"))
-# print(len(training_data))
-tlabel, tpixels = training_data[0]
+testing_data = list(read(dataset = "testing", path = "./data"))
 
 # Find distance between trainDigit and testDigit
 def calcDistL1(testval, trainval):
@@ -15,31 +17,55 @@ def calcDistL1(testval, trainval):
 
 def nearestNeighbor(testval):
     testlabel, testpixels = testval
-    print(testlabel)
-    print(testpixels)
     min_dist = 10000000
+    distances = []
     for i in xrange(len(training_data)):
         tlabel, tpixels = training_data[i]
         dist = calcDistL1(testpixels, tpixels)
-        if dist < min_dist:
-            min_dist = dist
-        data = (tlabel, min_dist)
-    return data
+        data = (dist, tlabel)
+        distances.append(data)
+    distances.sort()
+    return distances
 
-# def predict(testNum, k):
-    # Calc distance between to numbers
-    # for i in range(len(training_data)):
+def knn(k, testDigitIndex):
+    # show(testing_data[testDigitIndex][1])
+    label = testing_data[testDigitIndex][0]
+    # print("Test Digit Label: " + str(label))
+    sorted_dists = nearestNeighbor(testing_data[testDigitIndex])
+    knnObjs = sorted_dists[:k]
 
+    # strip list to be list of nearest labels
+    nearest = []
+    for x in xrange(len(knnObjs)):
+        t, l = knnObjs[x]
+        nearest.append(l)
 
-testing_data = list(read(dataset = "testing", path = "./data"))
-label, pixels = testing_data[0]
-testval = (label, pixels)
+    this_data = Counter(nearest)
+    vote = this_data.most_common(1)
+    prediction = vote[0][0]
+    return (label, prediction)
 
-# print(label)
-# show(pixels)
+# def calcAccuracy():
 
-print("Distance:")
-# print(calcDistL1(pixels, tpixels))
-# print(calcDistL1(pixels, pixels))
-for i in xrange(10):
-    print(nearestNeighbor(testing_data[i]))
+totalcorrect = 0
+# totalincorrect = 0
+for i in xrange(len(testing_data)):
+    result = knn(5, i)
+    l, p = result
+    # print("I think this is " + str(p))
+    if l == p:
+        # print("Correct")
+        totalcorrect = totalcorrect + 1
+        # print(totalcorrect)
+    # else:
+        # print("Incorrect")
+
+accuracy = totalcorrect / len(testing_data)
+print("Accuracy: " + str(accuracy))
+
+print("--- %s seconds ---" % (time.time() - start_time))
+# print("I think this is a " + str(knn(1, 1)))
+# print("I think this is a " + str(knn(1, 5)))
+# print("I think this is a " + str(knn(1, 3)))
+# for i in xrange(10):
+#     print(nearestNeighbor(testing_data[i]))
