@@ -7,10 +7,14 @@ import time
 
 start_time = time.time()
 
+# read MNIST database info
+# reading functions from: https://gist.github.com/akesling/5358964
+
 training_data = list(read(dataset = "training", path = "./data"))
 testing_data = list(read(dataset = "testing", path = "./data"))
 
 # Find distance between trainDigit and testDigit
+# Pixel-wise absolute value difference
 def calcDistL1(testval, trainval):
     dist = np.sum(np.abs(testval-trainval))
     return dist
@@ -30,7 +34,7 @@ def nearestNeighbor(testval):
 def knn(k, testDigitIndex):
     # show(testing_data[testDigitIndex][1])
     label = testing_data[testDigitIndex][0]
-    # print("Test Digit Label: " + str(label))
+    print("Test Digit Label: " + str(label))
     sorted_dists = nearestNeighbor(testing_data[testDigitIndex])
     knnObjs = sorted_dists[:k]
 
@@ -45,27 +49,41 @@ def knn(k, testDigitIndex):
     prediction = vote[0][0]
     return (label, prediction)
 
-# def calcAccuracy():
 
-totalcorrect = 0
-# totalincorrect = 0
-for i in xrange(len(testing_data)):
-    result = knn(5, i)
-    l, p = result
-    # print("I think this is " + str(p))
-    if l == p:
-        # print("Correct")
-        totalcorrect = totalcorrect + 1
-        # print(totalcorrect)
-    # else:
-        # print("Incorrect")
+# Inputs: (testing_length, k, fileout_name, dist_type)
+# Training length: How much of the testing set should it run the prediction on
+# k: Pass in Value of k
+# fileout_name: Name of file to write results to
+# dist_type: Which distance formula to use: 1: L1, or 2: L2
+def mainKNN(testing_length, k):
+    totalcorrect = 0
+    for i in xrange(testing_length):
+        print(str(i+1) + " out of " + str(testing_length))
+        result = knn(k, i)
+        l, p = result
+        print("Predicted label: " + str(p))
+        if l == p:
+            print("CORRECT")
+            totalcorrect = totalcorrect + 1.0
+        else:
+            print("INCORRECT")
+        print("\n")
+        # show(testing_data[i][1]) # uncomment to view digit in numpy graph
 
-accuracy = totalcorrect / len(testing_data)
-print("Accuracy: " + str(accuracy))
+    print("Total correct: " + str(totalcorrect))
+    accuracy = float(totalcorrect / testing_length)*100.00
+    print("Accuracy: " + str(accuracy) + "%")
 
-print("--- %s seconds ---" % (time.time() - start_time))
-# print("I think this is a " + str(knn(1, 1)))
-# print("I think this is a " + str(knn(1, 5)))
-# print("I think this is a " + str(knn(1, 3)))
-# for i in xrange(10):
-#     print(nearestNeighbor(testing_data[i]))
+    print("%s seconds" % (time.time() - start_time))
+
+# # Test 1:
+# mainKNN(1000, 5)
+
+# # Test 2:
+# mainKNN(50, 2)
+
+# # Test 3:
+# mainKNN(50, 10)
+
+# Test 4:
+mainKNN(50, 30)
